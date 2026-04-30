@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>伦敦 2026 乒乓世锦赛追踪</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="homeView" class="app-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">赛事追踪原型</p>
+          <h1>伦敦 2026 世锦赛</h1>
+          <p class="hero-text">
+            追踪每一场比赛、查看最新比分，并在你关注的对局里上香、敲木鱼、盘手串，为比赛加一点仪式感。
+          </p>
+          <div class="hero-meta">
+            <span>赛事：ITTF World Team Table Tennis Championships Finals</span>
+            <span>日期：2026 年 4 月 28 日 - 5 月 10 日</span>
+            <span>地点：London</span>
+          </div>
+        </div>
+        <div class="hero-side">
+          <div class="count-card">
+            <p>今日赛程</p>
+            <strong>12</strong>
+            <span>当前为原型数据，后续可接实时赛程接口</span>
+          </div>
+          <div class="count-card warm">
+            <p>总祈福次数</p>
+            <strong id="totalBlessingCount">0</strong>
+            <span>烧香、木鱼、盘串合计</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout single-column">
+        <section class="panel matches-panel">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">Match Center</p>
+              <h2>分组与晋级</h2>
+            </div>
+            <div class="filter-pills">
+              <button class="pill active" type="button">小组赛</button>
+              <button class="pill" type="button">晋级赛</button>
+              <button class="pill" type="button">中国队</button>
+            </div>
+          </div>
+
+          <div id="groupStageBoard" class="stage-board"></div>
+          <div id="knockoutBoard" class="knockout-board"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="detailView" class="detail-shell hidden">
+      <header class="detail-header">
+        <button id="backBtn" class="back-btn" type="button">返回比赛列表</button>
+        <div class="detail-head-copy">
+          <p id="detailStage" class="eyebrow"></p>
+          <h2 id="detailTitle"></h2>
+          <p id="detailMeta" class="detail-meta"></p>
+        </div>
+      </header>
+
+      <main class="detail-layout">
+        <section class="panel score-panel">
+          <div class="score-top">
+            <span id="detailStatus" class="status-badge"></span>
+            <span id="detailTable" class="series-score"></span>
+          </div>
+          <div class="score-board">
+            <div class="score-team">
+              <p id="teamAName"></p>
+              <strong id="teamAScore"></strong>
+            </div>
+            <div class="score-divider">:</div>
+            <div class="score-team">
+              <p id="teamBName"></p>
+              <strong id="teamBScore"></strong>
+            </div>
+          </div>
+          <p id="detailNote" class="detail-note"></p>
+
+          <div class="live-metrics">
+            <article class="metric-card">
+              <p>比赛专属气运值</p>
+              <strong id="fortuneValue">0</strong>
+              <div class="fortune-bar">
+                <span id="fortuneFill"></span>
+              </div>
+              <span id="fortuneText" class="metric-foot">此场的祈福会累积成专属气运。</span>
+            </article>
+            <article class="metric-card">
+              <p>一起上香</p>
+              <strong id="togetherCount">128</strong>
+              <span id="togetherText" class="metric-foot">此刻有 128 人正在为这场比赛祈福。</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel ritual-panel">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">Blessing Actions</p>
+              <h2>祈福方式</h2>
+            </div>
+            <span id="detailBlessingCount" class="series-score"></span>
+          </div>
+
+          <div class="ritual-tabs">
+            <button class="ritual-tab active" type="button" data-ritual="incense">烧香</button>
+            <button class="ritual-tab" type="button" data-ritual="mokugyo">木鱼</button>
+            <button class="ritual-tab" type="button" data-ritual="beads">盘串</button>
+          </div>
+
+          <div class="combo-panel">
+            <div>
+              <p class="combo-label">祈福动作连击</p>
+              <strong id="comboValue">0 连击</strong>
+            </div>
+            <span id="comboText" class="series-score">轻触开始，连击会为气运值加成。</span>
+          </div>
+
+          <div id="incensePanel" class="ritual-mode">
+            <div class="incense-stage" aria-live="polite">
+              <div id="comboBurst" class="combo-burst hidden"></div>
+              <div class="altar-glow"></div>
+              <div class="incense-stick">
+                <div id="ember" class="ember"></div>
+                <div id="smoke" class="smoke hidden">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+              <div class="ash-bowl"></div>
+            </div>
+            <button id="igniteBtn" class="action-btn" type="button">为本场烧香</button>
+          </div>
+
+          <div id="mokugyoPanel" class="ritual-mode hidden">
+            <div class="mokugyo-stage">
+              <div id="mokugyoBurst" class="combo-burst hidden"></div>
+              <button id="mokugyoBtn" class="mokugyo" aria-label="敲木鱼">
+                <span class="mokugyo-top"></span>
+                <span class="mokugyo-hole"></span>
+                <span class="mallet"></span>
+              </button>
+            </div>
+            <button id="mokugyoActionBtn" class="action-btn secondary" type="button">为本场敲一下木鱼</button>
+          </div>
+
+          <div id="beadsPanel" class="ritual-mode hidden">
+            <div class="beads-stage app-stage">
+              <div id="beadsBurst" class="combo-burst hidden"></div>
+              <div class="phone-shell">
+                <div class="phone-notch"></div>
+                <div id="beadsTouchArea" class="beads-touch-area" aria-label="滑动手串区域">
+                  <div class="touch-hint">
+                    <span class="touch-dot"></span>
+                    <p>左右滑动手串，也可以点按钮记一次盘串祈福</p>
+                  </div>
+                  <div id="beadsRing" class="beads-ring" aria-label="手串"></div>
+                </div>
+              </div>
+            </div>
+            <button id="beadsActionBtn" class="action-btn secondary" type="button">记一次盘串祈福</button>
+          </div>
+        </section>
+
+        <section class="panel messages-panel">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">Community Wishes</p>
+              <h2>大家的祈福留言</h2>
+            </div>
+          </div>
+
+          <section class="floating-wall-panel">
+            <div class="floating-head">
+              <div>
+                <p class="kicker">Top Wishes</p>
+                <h3>留言漂浮墙</h3>
+              </div>
+              <span class="series-score">点赞靠前自动上墙</span>
+            </div>
+            <div id="floatingWall" class="floating-wall"></div>
+          </section>
+
+          <label class="wish-box" for="wishInput">
+            <span>写一条想留在这场比赛里的话</span>
+            <textarea
+              id="wishInput"
+              rows="4"
+              placeholder="例如：愿关键分稳住，拿下这场。"
+            ></textarea>
+          </label>
+          <div class="message-actions">
+            <button id="submitWishBtn" class="action-btn" type="button">发布祈福留言</button>
+            <button id="repayWishBtn" class="back-btn hidden" type="button">赛后还愿</button>
+          </div>
+          <p id="wishEcho" class="wish-echo">可以边祈福边留言，大家会一起看到。</p>
+
+          <div id="messagesList" class="messages-list"></div>
+        </section>
+
+        <section id="memorialPanel" class="panel memorial-panel hidden">
+          <div class="panel-head">
+            <div>
+              <p class="kicker">Highlight Card</p>
+              <h2>名场面纪念卡</h2>
+            </div>
+            <span class="series-score">赛后自动生成</span>
+          </div>
+          <div class="memorial-card">
+            <p id="memorialTitle" class="memorial-title"></p>
+            <div class="memorial-grid">
+              <div>
+                <span>参与祈福</span>
+                <strong id="memorialBlessings"></strong>
+              </div>
+              <div>
+                <span>留下的话</span>
+                <strong id="memorialMessage"></strong>
+              </div>
+              <div>
+                <span>当时比分</span>
+                <strong id="memorialScore"></strong>
+              </div>
+              <div>
+                <span>是否还愿</span>
+                <strong id="memorialRepay"></strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
