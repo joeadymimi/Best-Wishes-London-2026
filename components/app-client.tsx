@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { groupStandings, initialMatches, knockoutRounds } from "@/lib/mock-data";
+import { playBeadsRelease, playBeadsTick, playIncenseIgnite, playMokugyoKnock, primeSfx } from "@/lib/sfx";
 import type { MatchItem, Message, RitualType } from "@/lib/types";
 
 const statusMap = {
@@ -46,6 +47,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
   const comboTimerRef = useRef<number | null>(null);
   const inertiaFrameRef = useRef<number | null>(null);
   const dragStateRef = useRef<{ lastX: number; lastTime: number } | null>(null);
+  const beadsTickStrengthRef = useRef(0);
   const burstRefs = {
     incense: useRef<HTMLDivElement>(null),
     mokugyo: useRef<HTMLDivElement>(null),
@@ -225,6 +227,9 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
       return;
     }
 
+    // Best-effort: unlock audio on first user gesture (mobile autoplay restrictions).
+    void primeSfx();
+
     const comboPreview = comboCount + 1;
     const fortuneBoost = comboPreview >= 5 ? 6 : comboPreview >= 3 ? 4 : 2;
     registerCombo(ritual);
@@ -264,6 +269,14 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     } catch {
       setMatches(optimistic);
     }
+  }
+
+  function addBlessingWithSfx(ritual: RitualType) {
+    void primeSfx();
+    if (ritual === "beads") {
+      playBeadsRelease();
+    }
+    addBlessing(ritual);
   }
 
   async function addMessage(modeType: "wish" | "repay") {
@@ -372,6 +385,9 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
   }
 
   function triggerMokugyo() {
+    void primeSfx();
+    playMokugyoKnock(1);
+
     const node = mokugyoRef.current;
     if (node) {
       node.classList.remove("hit");
@@ -407,8 +423,10 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
   }
 
   function handleDragStart(clientX: number) {
+    void primeSfx();
     stopInertia();
     dragStateRef.current = { lastX: clientX, lastTime: Date.now() };
+    beadsTickStrengthRef.current = 0;
   }
 
   function handleDragMove(clientX: number) {
@@ -418,6 +436,16 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
 
     const deltaX = clientX - dragStateRef.current.lastX;
     setRotation((current) => current + deltaX * 0.7);
+
+    const dt = Math.max(12, Date.now() - dragStateRef.current.lastTime);
+    const speed = Math.abs(deltaX) / dt; // px/ms
+    const strength = Math.min(1, speed * 2.6);
+    // Gentle smoothing so it doesn't "chatter" when finger jitters.
+    beadsTickStrengthRef.current = beadsTickStrengthRef.current * 0.6 + strength * 0.4;
+    if (Math.abs(deltaX) > 1.2) {
+      playBeadsTick(beadsTickStrengthRef.current);
+    }
+
     dragStateRef.current = {
       lastX: clientX,
       lastTime: Date.now()
@@ -429,6 +457,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
       return;
     }
     dragStateRef.current = null;
+    playBeadsRelease();
     addBlessing("beads");
     startInertia();
   }
@@ -736,9 +765,11 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
                 className="action-btn"
                 type="button"
                 onClick={() => {
+                  void primeSfx();
                   const next = !incenseLit;
                   setIncenseLit(next);
                   if (next) {
+                    playIncenseIgnite();
                     addBlessing("incense");
                   }
                 }}
@@ -800,7 +831,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
                             className="bead"
                             style={{ transform: `translate(${x}px, ${y}px)` }}
                             aria-label={`第 ${index + 1} 颗珠`}
-                            onClick={() => addBlessing("beads")}
+                            onClick={() => addBlessingWithSfx("beads")}
                           ></button>
                         );
                       })}
@@ -808,7 +839,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
                   </div>
                 </div>
               </div>
-              <button className="action-btn secondary" type="button" onClick={() => addBlessing("beads")}>
+              <button className="action-btn secondary" type="button" onClick={() => addBlessingWithSfx("beads")}>
                 记一次盘串祈福
               </button>
             </div>
