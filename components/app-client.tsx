@@ -60,6 +60,32 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     cleanup: () => void;
   } | null>(null);
 
+  // Record pageviews (best-effort, de-duped) for admin monitoring.
+  useEffect(() => {
+    const anonId = getOrCreateAnonId();
+    const path = window.location.pathname || "/";
+    const dedupeKey = `tt2026-pageview:${path}`;
+    const now = Date.now();
+
+    const last = Number(window.localStorage.getItem(dedupeKey) ?? "0");
+    // De-dupe within 30 minutes per path per device.
+    if (last && now - last < 30 * 60 * 1000) {
+      return;
+    }
+    window.localStorage.setItem(dedupeKey, String(now));
+
+    void fetch("/api/pageviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        anonId,
+        path,
+        referrer: document.referrer || "",
+        userAgent: navigator.userAgent || ""
+      })
+    });
+  }, [pathname]);
+
   function getOrCreateAnonId() {
     const key = "tt2026-anon-id";
     const existing = window.localStorage.getItem(key);

@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const match = await addBlessing(body.matchId, body.ritual);
 
   if (!match) {
-    return NextResponse.json({ error: "Match not found" }, { status: 404 });
+    return NextResponse.json({ error: "Failed to record blessing" }, { status: 500 });
   }
 
   return NextResponse.json({ match });

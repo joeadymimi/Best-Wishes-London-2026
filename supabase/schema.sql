@@ -62,7 +62,18 @@ create table if not exists public.match_updates (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.pageviews (
+  id uuid primary key default gen_random_uuid(),
+  anon_id text not null,
+  path text not null,
+  referrer text,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists blessings_match_id_idx on public.blessings(match_id);
 create index if not exists messages_match_id_idx on public.messages(match_id);
 create index if not exists message_likes_message_id_idx on public.message_likes(message_id);
 create index if not exists match_updates_match_id_idx on public.match_updates(match_id);
+create index if not exists pageviews_created_at_idx on public.pageviews(created_at);
+create index if not exists pageviews_path_idx on public.pageviews(path);

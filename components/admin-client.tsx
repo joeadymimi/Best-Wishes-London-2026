@@ -20,6 +20,12 @@ export function AdminClient() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [form, setForm] = useState<EditableMatch | null>(null);
   const [feedback, setFeedback] = useState("正在加载比赛数据...");
+  const [analytics, setAnalytics] = useState<{
+    timezone: string;
+    total: number;
+    today: number;
+    last7Days: Array<{ day: string; count: number }>;
+  } | null>(null);
 
   useEffect(() => {
     async function loadMatches() {
@@ -34,6 +40,25 @@ export function AdminClient() {
     }
 
     void loadMatches();
+  }, []);
+
+  useEffect(() => {
+    async function loadAnalytics() {
+      const response = await fetch("/api/admin/analytics", { cache: "no-store" });
+      const data = (await response.json()) as {
+        timezone?: string;
+        total?: number;
+        today?: number;
+        last7Days?: Array<{ day: string; count: number }>;
+      };
+      setAnalytics({
+        timezone: data.timezone ?? "Asia/Shanghai",
+        total: data.total ?? 0,
+        today: data.today ?? 0,
+        last7Days: data.last7Days ?? []
+      });
+    }
+    void loadAnalytics();
   }, []);
 
   const selectedMatch = useMemo(
@@ -99,6 +124,23 @@ export function AdminClient() {
           </Link>
           <span className="series-score">{feedback}</span>
         </div>
+      </section>
+
+      <section className="panel admin-panel">
+        <p className="eyebrow">Analytics</p>
+        <h2>访问量</h2>
+        <p className="hero-text">统计口径：每次打开页面（30 分钟内同一路径去重）。时区：{analytics?.timezone ?? "Asia/Shanghai"}。</p>
+        <div className="admin-actions">
+          <span className="series-score">总访问量：{analytics?.total ?? 0}</span>
+          <span className="series-score">今日访问量：{analytics?.today ?? 0}</span>
+        </div>
+        {analytics?.last7Days?.length ? (
+          <div className="admin-actions">
+            <span className="series-score">
+              近 7 天：{analytics.last7Days.map((d) => `${d.day} ${d.count}`).join(" · ")}
+            </span>
+          </div>
+        ) : null}
       </section>
 
       <section className="panel admin-grid">

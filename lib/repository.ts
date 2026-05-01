@@ -174,6 +174,10 @@ export async function addBlessing(matchId: string, ritual: RitualType) {
     if (!blessingError && !updateError) {
       return getMatch(matchId);
     }
+
+    // If Supabase is configured but the write fails (often due to RLS/policies),
+    // do not silently fall back to in-memory state (serverless would "reset").
+    return null;
   }
 
   const match = getMemoryMatch(matchId);
@@ -221,6 +225,8 @@ export async function addMessage(
       }
       return getMatch(matchId);
     }
+
+    return null;
   }
 
   const match = getMemoryMatch(matchId);
