@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: london2026
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+    # Add any env vars your app needs here:
+    # - NEXT_PUBLIC_API_URL=https://your-api.com
+
+  # Optional: nginx reverse proxy (recommended for production)
+  nginx:
+    image: nginx:alpine
+    container_name: london2026-nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Uncomment after getting SSL cert:
+      # - ./ssl/cert.pem:/etc/nginx/ssl/cert.pem:ro
+      # - ./ssl/key.pem:/etc/nginx/ssl/key.pem:ro
+    depends_on:
+      - app
