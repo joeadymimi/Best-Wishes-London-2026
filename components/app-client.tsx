@@ -506,14 +506,14 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
         </div>
         <div className="hero-side">
           <div className="count-card">
-            <p>比赛场次</p>
+            <p>今日赛程</p>
             <strong>{matches.length}</strong>
-            <span>以比赛官方赛程与数据源更新为准</span>
+            <span>自动更新</span>
           </div>
           <div className="count-card warm">
-            <p>总祈福次数</p>
+            <p>应援热度</p>
             <strong>{totalBlessingCount}</strong>
-            <span>烧香、木鱼、盘串合计</span>
+            <span>全站累计</span>
           </div>
         </div>
       </header>
@@ -526,7 +526,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
                 <p className="kicker">Continue</p>
                 <h2>继续上次那场比赛</h2>
               </div>
-              <span className="series-score">回流入口</span>
+              <span className="series-score">继续观看</span>
             </div>
             <div className="return-card">
               <div>
@@ -546,11 +546,8 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
               <p className="kicker">China Focus</p>
               <h2>中国队专区</h2>
             </div>
-            <span className="series-score">更适合分享传播的快捷入口</span>
+            <span className="series-score">重点场次</span>
           </div>
-          <p className="hero-text">
-            如果用户是从小红书第一次点进来，先看到中国队重点比赛会更容易理解这个应用，也更容易马上参与祈福。
-          </p>
           <div className="china-spotlight-grid">
             {chinaSpotlightMatches.map((match) => (
               <article key={match.id} className="china-spotlight-card">
