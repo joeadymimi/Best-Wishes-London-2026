@@ -9,13 +9,17 @@ export async function GET() {
   const supabase = getSupabaseServerClient();
   let canSelectMatches: boolean | null = null;
   let canSelectBlessings: boolean | null = null;
+  let matchSelectError: string | null = null;
+  let blessingsSelectError: string | null = null;
 
   if (supabase) {
     const { error: selectErr } = await supabase.from("matches").select("id").limit(1);
     canSelectMatches = !selectErr;
+    matchSelectError = selectErr ? `${selectErr.code ?? "err"}:${selectErr.message}` : null;
 
     const { error: blessingsErr } = await supabase.from("blessings").select("id").limit(1);
     canSelectBlessings = !blessingsErr;
+    blessingsSelectError = blessingsErr ? `${blessingsErr.code ?? "err"}:${blessingsErr.message}` : null;
   }
 
   return NextResponse.json({
@@ -26,5 +30,8 @@ export async function GET() {
     serverClientReady: Boolean(supabase),
     canSelectMatches,
     canSelectBlessings
+    ,
+    matchSelectError,
+    blessingsSelectError
   });
 }
