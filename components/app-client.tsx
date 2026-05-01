@@ -233,22 +233,46 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     [matches]
   );
 
-  const groupBuckets = useMemo(() => {
-    const groups = new Map<string, MatchItem[]>();
-    for (const match of matches) {
-      if (match.phase !== "group") continue;
-      const name = match.group?.trim() || "小组赛";
-      const list = groups.get(name) ?? [];
-      list.push(match);
-      groups.set(name, list);
-    }
-    return Array.from(groups.entries()).map(([name, items]) => ({
-      name,
-      items
-    }));
-  }, [matches]);
+  function getScheduleBucketLabel(match: MatchItem) {
+    const label = (match.time ?? "").trim();
+    if (!label) return "待定";
+    // Prefer "5月1日 17:00" / "5月1日 0:00(+1)" style labels as the bucket title.
+    const m = label.match(/(\d{1,2}月\d{1,2}日)\s*(\d{1,2}:\d{2}(?:\(\+\d+\))?)/);
+    if (m) return `${m[1]} ${m[2]}`;
+    // Fallback: keep original label ("进行中", "18:30", etc.)
+    return label;
+  }
 
-  const knockoutMatches = useMemo(() => matches.filter((m) => m.phase === "knockout"), [matches]);
+  function getScheduleSortKey(bucket: string) {
+    const m = bucket.match(/(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})(?:\(\+(\d+)\))?/);
+    if (!m) return Number.POSITIVE_INFINITY;
+    const month = Number(m[1]);
+    const day = Number(m[2]);
+    const hour = Number(m[3]);
+    const minute = Number(m[4]);
+    const dayOffset = m[5] ? Number(m[5]) : 0;
+    // Use 2026 as the season year for stable ordering.
+    return Date.UTC(2026, month - 1, day + dayOffset, hour, minute);
+  }
+
+  const scheduleBuckets = useMemo(() => {
+    const buckets = new Map<string, MatchItem[]>();
+    for (const match of matches) {
+      const key = getScheduleBucketLabel(match);
+      const list = buckets.get(key) ?? [];
+      list.push(match);
+      buckets.set(key, list);
+    }
+
+    const entries = Array.from(buckets.entries()).map(([label, items]) => {
+      const sorted = [...items].sort((a, b) => a.table.localeCompare(b.table));
+      return { label, sortKey: getScheduleSortKey(label), items: sorted };
+    });
+
+    // Put parseable date/time buckets first in chronological order; others at the end.
+    entries.sort((a, b) => a.sortKey - b.sortKey || a.label.localeCompare(b.label));
+    return entries;
+  }, [matches]);
 
   const lastMatch = useMemo(
     () => matches.find((match) => match.id === selectedMatchId) ?? null,
@@ -677,20 +701,25 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
             </div>
           </div>
           {loading ? <p className="hero-text">正在加载比赛数据...</p> : null}
+          {!loading ? (
+            <p className="hero-text">
+              当前仅展示已录入的比赛。赛程录入完成后，这里会自动扩展为完整比赛列表。
+            </p>
+          ) : null}
 
           <div className="stage-board">
             <div className="group-grid">
-              {groupBuckets.map((group) => (
-                <section key={group.name} className="group-card">
+              {scheduleBuckets.map((bucket) => (
+                <section key={bucket.label} className="group-card">
                   <div className="group-card-header">
                     <div>
-                      <h3>{group.name}</h3>
-                      <p className="group-subtitle">小组赛对阵</p>
+                      <h3>{bucket.label}</h3>
+                      <p className="group-subtitle">本时间段赛程</p>
                     </div>
-                    <span className="series-score">小组分区</span>
+                    <span className="series-score">{bucket.items.length} 场</span>
                   </div>
                   <div className="group-matches">
-                    {group.items.map((match) => (
+                    {bucket.items.map((match) => (
                       <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
                     ))}
                   </div>
@@ -699,30 +728,6 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
             </div>
           </div>
 
-          <div className="knockout-board">
-            <div className="knockout-header">
-              <div>
-                <h3>淘汰赛</h3>
-                <p className="knockout-subtitle">对阵将在官方赛程确认后同步更新</p>
-              </div>
-              <span className="series-score">Knockout</span>
-            </div>
-            {knockoutMatches.length ? (
-              <div className="knockout-path">
-                <div className="path-column">
-                  <span className="path-column-title">淘汰赛场次</span>
-                  {knockoutMatches.map((match) => (
-                    <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="path-match">
-                <p>淘汰赛对阵待公布</p>
-                <strong>我们会在拿到准确信息后同步更新</strong>
-              </div>
-            )}
-          </div>
         </section>
       </main>
     </div>
