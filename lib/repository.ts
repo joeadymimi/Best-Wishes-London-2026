@@ -18,7 +18,6 @@ type MatchRecord = {
   detail: string;
   scheduled_label: string;
   note: string;
-  together_now: number;
   fortune: number;
   source_name: string | null;
   source_url: string | null;
@@ -75,7 +74,9 @@ function mapSupabaseMatch(match: MatchRecord, messages: MessageRecord[]): MatchI
     time: match.scheduled_label,
     note: match.note,
     blessings: { incense: 0, mokugyo: 0, beads: 0 },
-    togetherNow: match.together_now,
+    // "togetherNow" is treated as realtime online count in the UI, so we don't persist it.
+    // We'll fill it from Supabase Realtime Presence on the client.
+    togetherNow: 0,
     fortune: match.fortune,
     sourceName: match.source_name ?? undefined,
     sourceUrl: match.source_url ?? undefined,
@@ -109,12 +110,38 @@ export async function listMatches(): Promise<MatchItem[]> {
     return cloneMatches();
   }
 
-  return matchRows.map((match) =>
+  const baseMatches = matchRows.map((match) =>
     mapSupabaseMatch(
       match as MatchRecord,
       (messageRows as MessageRecord[]).filter((message) => message.match_id === match.id)
     )
   );
+
+  // Compute real blessing totals from the blessings table.
+  // We intentionally do it in JS to avoid relying on PostgREST aggregates being enabled.
+  const { data: blessingRows } = await supabase
+    .from("blessings")
+    .select("match_id, ritual_type")
+    .order("created_at", { ascending: false })
+    .limit(20000);
+
+  if (!blessingRows) {
+    return baseMatches;
+  }
+
+  const totals = new Map<string, { incense: number; mokugyo: number; beads: number }>();
+  for (const row of blessingRows as Array<{ match_id: string; ritual_type: RitualType }>) {
+    const cur = totals.get(row.match_id) ?? { incense: 0, mokugyo: 0, beads: 0 };
+    if (row.ritual_type === "incense") cur.incense += 1;
+    if (row.ritual_type === "mokugyo") cur.mokugyo += 1;
+    if (row.ritual_type === "beads") cur.beads += 1;
+    totals.set(row.match_id, cur);
+  }
+
+  return baseMatches.map((match) => ({
+    ...match,
+    blessings: totals.get(match.id) ?? { incense: 0, mokugyo: 0, beads: 0 }
+  }));
 }
 
 export async function getMatch(matchId: string): Promise<MatchItem | null> {
@@ -139,7 +166,6 @@ export async function addBlessing(matchId: string, ritual: RitualType) {
     const { error: updateError } = await supabase
       .from("matches")
       .update({
-        together_now: match.togetherNow + 1,
         fortune: Math.min(100, match.fortune + 3),
         updated_at: new Date().toISOString()
       })
@@ -156,7 +182,6 @@ export async function addBlessing(matchId: string, ritual: RitualType) {
   }
 
   match.blessings[ritual] += 1;
-  match.togetherNow += 1;
   match.fortune = Math.min(100, match.fortune + 3);
   match.updatedAt = new Date().toISOString();
   match.userSession.blessings += 1;

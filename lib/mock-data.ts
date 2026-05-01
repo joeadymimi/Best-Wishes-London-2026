@@ -15,15 +15,13 @@ export const initialMatches: MatchItem[] = [
     detail: "中国队第一阶段首战",
     time: "5月2日 17:00",
     note: "中国队重点场次",
-    blessings: { incense: 66, mokugyo: 28, beads: 18 },
-    togetherNow: 92,
-    fortune: 54,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-05-01T09:00:00+08:00",
-    messages: [
-      { id: "c1-1", ritual: "烧香", user: "球迷 甲", text: "先把开门红稳稳拿下。", time: "6 分钟前", likes: 16, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -40,15 +38,13 @@ export const initialMatches: MatchItem[] = [
     detail: "中国男团首场亮相",
     time: "5月2日 19:30",
     note: "中国队重点场次",
-    blessings: { incense: 74, mokugyo: 30, beads: 21 },
-    togetherNow: 108,
-    fortune: 61,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-05-01T09:00:00+08:00",
-    messages: [
-      { id: "c2-1", ritual: "木鱼", user: "球迷 乙", text: "先把节奏打出来，给后面攒气势。", time: "4 分钟前", likes: 11, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -65,15 +61,13 @@ export const initialMatches: MatchItem[] = [
     detail: "中国女团第二场",
     time: "5月3日 0:00",
     note: "中国队重点场次",
-    blessings: { incense: 58, mokugyo: 23, beads: 15 },
-    togetherNow: 79,
-    fortune: 49,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-05-01T09:00:00+08:00",
-    messages: [
-      { id: "c3-1", ritual: "盘串", user: "球迷 丙", text: "夜场也要稳稳把握住。", time: "9 分钟前", likes: 9, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -90,15 +84,13 @@ export const initialMatches: MatchItem[] = [
     detail: "焦点硬仗",
     time: "5月3日 2:30",
     note: "中国队重点场次",
-    blessings: { incense: 138, mokugyo: 66, beads: 32 },
-    togetherNow: 188,
-    fortune: 73,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-05-01T09:00:00+08:00",
-    messages: [
-      { id: "c4-1", ritual: "烧香", user: "球迷 丁", text: "这场先提前上香，关键战要顶住。", time: "2 分钟前", likes: 35, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -115,15 +107,13 @@ export const initialMatches: MatchItem[] = [
     detail: "中国男团第三场",
     time: "5月3日 19:30",
     note: "中国队重点场次",
-    blessings: { incense: 84, mokugyo: 35, beads: 24 },
-    togetherNow: 116,
-    fortune: 63,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-05-01T09:00:00+08:00",
-    messages: [
-      { id: "c5-1", ritual: "木鱼", user: "球迷 戊", text: "这场想看高质量攻防。", time: "11 分钟前", likes: 14, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -140,15 +130,13 @@ export const initialMatches: MatchItem[] = [
     detail: "中国女团焦点战",
     time: "5月3日 19:30",
     note: "中国队重点场次",
-    blessings: { incense: 102, mokugyo: 42, beads: 26 },
-    togetherNow: 146,
-    fortune: 68,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-05-01T09:00:00+08:00",
-    messages: [
-      { id: "c6-1", ritual: "烧香", user: "球迷 己", text: "希望这场打出统治力。", time: "7 分钟前", likes: 18, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -165,17 +153,13 @@ export const initialMatches: MatchItem[] = [
     detail: "第 4 盘进行中",
     time: "进行中",
     note: "关键场，实时比分位",
-    blessings: { incense: 128, mokugyo: 76, beads: 45 },
-    togetherNow: 128,
-    fortune: 76,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-04-29T19:10:00+08:00",
-    messages: [
-      { id: "m1-1", ritual: "烧香", user: "球迷 A", text: "愿关键分稳住，拿下最后两盘。", time: "1 分钟前", likes: 34, liked: false },
-      { id: "m1-2", ritual: "木鱼", user: "球迷 B", text: "别急，节奏在自己手里。", time: "3 分钟前", likes: 21, liked: false },
-      { id: "m1-3", ritual: "盘串", user: "球迷 F", text: "今天这场真的需要一点气运加持。", time: "9 分钟前", likes: 18, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -192,15 +176,13 @@ export const initialMatches: MatchItem[] = [
     detail: "预计 18:30 开始",
     time: "18:30",
     note: "待开赛",
-    blessings: { incense: 34, mokugyo: 19, beads: 12 },
-    togetherNow: 63,
-    fortune: 48,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-04-29T17:20:00+08:00",
-    messages: [
-      { id: "m2-1", ritual: "盘串", user: "球迷 C", text: "希望今晚是一场高质量对攻。", time: "8 分钟前", likes: 12, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -218,16 +200,13 @@ export const initialMatches: MatchItem[] = [
     detail: "已结束",
     time: "16:10",
     note: "五盘大战",
-    blessings: { incense: 56, mokugyo: 23, beads: 18 },
-    togetherNow: 41,
-    fortune: 89,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-04-29T16:10:00+08:00",
-    messages: [
-      { id: "m3-1", ritual: "烧香", user: "球迷 D", text: "这场真的太胶着了，双方都值得尊重。", time: "12 分钟前", likes: 29, liked: false },
-      { id: "m3-2", ritual: "木鱼", user: "球迷 H", text: "这就是淘汰赛该有的张力。", time: "18 分钟前", likes: 17, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   },
   {
@@ -244,15 +223,13 @@ export const initialMatches: MatchItem[] = [
     detail: "第 3 盘进行中",
     time: "进行中",
     note: "胶着",
-    blessings: { incense: 22, mokugyo: 14, beads: 9 },
-    togetherNow: 52,
-    fortune: 39,
+    blessings: { incense: 0, mokugyo: 0, beads: 0 },
+    togetherNow: 0,
+    fortune: 0,
     sourceName: "草莓牛奶特别甜",
     sourceUrl: "",
-    updatedAt: "2026-04-29T19:05:00+08:00",
-    messages: [
-      { id: "m4-1", ritual: "木鱼", user: "球迷 E", text: "这场节奏很快，愿别失误太多。", time: "5 分钟前", likes: 8, liked: false }
-    ],
+    updatedAt: "2026-05-01T00:00:00Z",
+    messages: [],
     userSession: { blessings: 0, lastMessage: "", snapshotScore: "", repaid: false }
   }
 ];

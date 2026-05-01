@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { groupStandings, initialMatches, knockoutRounds } from "@/lib/mock-data";
+import { initialMatches } from "@/lib/mock-data";
 import { playBeadsRelease, playBeadsTick, playIncenseIgnite, playMokugyoKnock, primeSfx } from "@/lib/sfx";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 import type { MatchItem, Message, RitualType } from "@/lib/types";
 
 const statusMap = {
@@ -53,6 +54,20 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     beads: useRef<HTMLDivElement>(null)
   };
   const mokugyoRef = useRef<HTMLButtonElement>(null);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const presenceRef = useRef<{
+    channelName: string;
+    cleanup: () => void;
+  } | null>(null);
+
+  function getOrCreateAnonId() {
+    const key = "tt2026-anon-id";
+    const existing = window.localStorage.getItem(key);
+    if (existing) return existing;
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    window.localStorage.setItem(key, id);
+    return id;
+  }
 
   async function refreshMatches() {
     try {
@@ -117,6 +132,68 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     }
   }, [selectedMatchId]);
 
+  // Realtime online count (presence) for the currently opened match detail page.
+  useEffect(() => {
+    if (mode !== "detail" || !selectedMatchId) {
+      setOnlineCount(0);
+      return;
+    }
+
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      setOnlineCount(0);
+      return;
+    }
+
+    const anonId = getOrCreateAnonId();
+    const channelName = `presence:match:${selectedMatchId}`;
+
+    // Cleanup previous channel if any.
+    if (presenceRef.current?.channelName !== channelName) {
+      presenceRef.current?.cleanup();
+      presenceRef.current = null;
+    }
+
+    if (presenceRef.current) {
+      return;
+    }
+
+    const channel = supabase.channel(channelName, {
+      config: {
+        presence: { key: anonId }
+      }
+    });
+
+    const updateCount = () => {
+      const state = channel.presenceState();
+      const keys = Object.keys(state ?? {});
+      setOnlineCount(keys.length);
+    };
+
+    channel.on("presence", { event: "sync" }, updateCount);
+    channel.on("presence", { event: "join" }, updateCount);
+    channel.on("presence", { event: "leave" }, updateCount);
+
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        // We can attach minimal metadata; key uniqueness is what matters for counting.
+        void channel.track({ t: Date.now() });
+      }
+    });
+
+    const cleanup = () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {
+        // ignore
+      }
+      setOnlineCount(0);
+    };
+
+    presenceRef.current = { channelName, cleanup };
+    return cleanup;
+  }, [mode, selectedMatchId]);
+
   useEffect(() => {
     if (mode === "home" && pathname === "/") {
       const lastMatch = window.localStorage.getItem(LAST_MATCH_KEY);
@@ -155,6 +232,23 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     () => matches.filter(isChinaSpotlightMatch),
     [matches]
   );
+
+  const groupBuckets = useMemo(() => {
+    const groups = new Map<string, MatchItem[]>();
+    for (const match of matches) {
+      if (match.phase !== "group") continue;
+      const name = match.group?.trim() || "小组赛";
+      const list = groups.get(name) ?? [];
+      list.push(match);
+      groups.set(name, list);
+    }
+    return Array.from(groups.entries()).map(([name, items]) => ({
+      name,
+      items
+    }));
+  }, [matches]);
+
+  const knockoutMatches = useMemo(() => matches.filter((m) => m.phase === "knockout"), [matches]);
 
   const lastMatch = useMemo(
     () => matches.find((match) => match.id === selectedMatchId) ?? null,
@@ -269,7 +363,6 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
               ...match.blessings,
               [ritual]: match.blessings[ritual] + 1
             },
-            togetherNow: match.togetherNow + 1,
             fortune: Math.min(100, match.fortune + fortuneBoost),
             userSession: {
               ...match.userSession,
@@ -560,7 +653,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
                 <div className="match-footer">
                   <div className="match-footer-left">
                     <span className="blessing-chip">实时祈福 {getTotalForMatch(match)}</span>
-                    <span className="data-chip">{match.togetherNow} 人一起上香</span>
+                    <span className="data-chip">气运 {match.fortune}</span>
                   </div>
                   <button className="bless-btn" type="button" onClick={() => openMatch(match.id)}>
                     进入应援
@@ -575,7 +668,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
           <div className="panel-head">
             <div>
               <p className="kicker">Match Center</p>
-              <h2>分组与晋级</h2>
+              <h2>赛程</h2>
             </div>
             <div className="filter-pills">
               <button className="pill active" type="button">小组赛</button>
@@ -587,29 +680,19 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
 
           <div className="stage-board">
             <div className="group-grid">
-              {groupStandings.map((group) => (
+              {groupBuckets.map((group) => (
                 <section key={group.name} className="group-card">
                   <div className="group-card-header">
                     <div>
                       <h3>{group.name}</h3>
-                      <p className="group-subtitle">{group.subtitle}</p>
+                      <p className="group-subtitle">小组赛对阵</p>
                     </div>
                     <span className="series-score">小组分区</span>
                   </div>
                   <div className="group-matches">
-                    {matches
-                      .filter((match) => match.phase === "group" && match.group === group.name)
-                      .map((match) => (
-                        <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
-                      ))}
-                  </div>
-                  <div className="group-qualify">
-                    <p>当前晋级席位</p>
-                    <div className="group-qualify-list">
-                      {group.qualified.map((team) => (
-                        <span key={team} className="qualify-chip">{team}</span>
-                      ))}
-                    </div>
+                    {group.items.map((match) => (
+                      <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
+                    ))}
                   </div>
                 </section>
               ))}
@@ -619,30 +702,26 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
           <div className="knockout-board">
             <div className="knockout-header">
               <div>
-                <h3>晋级路线</h3>
-                <p className="knockout-subtitle">小组前二进入淘汰赛，逐轮决出冠军</p>
+                <h3>淘汰赛</h3>
+                <p className="knockout-subtitle">对阵将在官方赛程确认后同步更新</p>
               </div>
               <span className="series-score">Knockout</span>
             </div>
-            <div className="knockout-path">
-              {knockoutRounds.map((round) => (
-                <div key={round.title} className="path-column">
-                  <span className="path-column-title">{round.title}</span>
-                  {round.items.map((item) => (
-                    <div key={item} className="path-match">
-                      <p>晋级对阵位</p>
-                      <strong>{item}</strong>
-                    </div>
+            {knockoutMatches.length ? (
+              <div className="knockout-path">
+                <div className="path-column">
+                  <span className="path-column-title">淘汰赛场次</span>
+                  {knockoutMatches.map((match) => (
+                    <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
                   ))}
-                  {round.title === "1/8 决赛" &&
-                    matches
-                      .filter((match) => match.phase === "knockout")
-                      .map((match) => (
-                        <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
-                      ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="path-match">
+                <p>淘汰赛对阵待公布</p>
+                <strong>我们会在拿到准确信息后同步更新</strong>
+              </div>
+            )}
           </div>
         </section>
       </main>
@@ -734,8 +813,8 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
             </article>
             <article className="metric-card">
               <p>一起上香</p>
-              <strong>{selectedMatch.togetherNow}</strong>
-              <span className="metric-foot">此刻有 {selectedMatch.togetherNow} 人正在为这场比赛祈福。</span>
+              <strong>{onlineCount}</strong>
+              <span className="metric-foot">此刻在线应援人数（打开本场页面即计入）。</span>
             </article>
           </div>
         </section>
@@ -1023,7 +1102,7 @@ function MatchCard({
         <div className="match-footer-left">
           <span className="blessing-chip">实时祈福 {getTotalForMatch(match)}</span>
           <span className="data-chip">气运 {match.fortune}</span>
-          <span className="data-chip">{match.togetherNow} 人一起上香</span>
+          <span className="data-chip">实时祈福 {getTotalForMatch(match)}</span>
           <span className="blessing-chip open-chip">{getOpenLabel(match)}</span>
         </div>
         <button className="bless-btn" type="button" onClick={() => openMatch(match.id)}>
