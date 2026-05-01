@@ -572,7 +572,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
           <p className="eyebrow">赛事追踪</p>
           <h1>伦敦 2026 世锦赛</h1>
           <p className="hero-text">
-            追踪每一场比赛、查看最新比分，并在你关注的对局里上香、敲木鱼、盘手串，为比赛加一点仪式感。
+            关注中国队重点对阵，实时查看比分并参与应援。
           </p>
           <div className="hero-meta">
             <span>赛事：ITTF World Team Table Tennis Championships Finals</span>
@@ -580,42 +580,9 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
             <span>地点：London</span>
           </div>
         </div>
-        <div className="hero-side">
-          <div className="count-card">
-            <p>今日赛程</p>
-            <strong>{matches.length}</strong>
-            <span>自动更新</span>
-          </div>
-          <div className="count-card warm">
-            <p>应援热度</p>
-            <strong>{totalBlessingCount}</strong>
-            <span>全站累计</span>
-          </div>
-        </div>
       </header>
 
       <main className="layout single-column">
-        {lastMatch ? (
-          <section className="panel return-panel">
-            <div className="panel-head">
-              <div>
-                <p className="kicker">Continue</p>
-                <h2>继续上次那场比赛</h2>
-              </div>
-              <span className="series-score">继续观看</span>
-            </div>
-            <div className="return-card">
-              <div>
-                <strong>{lastMatch.teamA} vs {lastMatch.teamB}</strong>
-                <p>{lastMatch.time} · {lastMatch.detail}</p>
-              </div>
-              <button className="bless-btn" type="button" onClick={() => openMatch(lastMatch.id)}>
-                继续查看
-              </button>
-            </div>
-          </section>
-        ) : null}
-
         <section className="panel china-spotlight-panel">
           <div className="panel-head">
             <div>
