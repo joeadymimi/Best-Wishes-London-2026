@@ -38,6 +38,12 @@ type MessageRecord = {
 
 let memoryMatches: MatchItem[] = JSON.parse(JSON.stringify(initialMatches));
 
+function allowMemoryFallback() {
+  // In production we want to fail loudly if Supabase env is misconfigured;
+  // otherwise users will see "fake persistence" that resets between requests.
+  return process.env.NODE_ENV !== "production";
+}
+
 function cloneMatches() {
   return JSON.parse(JSON.stringify(memoryMatches)) as MatchItem[];
 }
@@ -98,7 +104,7 @@ export async function listMatches(): Promise<MatchItem[]> {
   const supabase = getSupabaseServerClient();
 
   if (!supabase) {
-    return cloneMatches();
+    return allowMemoryFallback() ? cloneMatches() : [];
   }
 
   const [{ data: matchRows, error: matchError }, { data: messageRows, error: messageError }] = await Promise.all([
@@ -107,7 +113,7 @@ export async function listMatches(): Promise<MatchItem[]> {
   ]);
 
   if (matchError || messageError || !matchRows || !messageRows) {
-    return cloneMatches();
+    return allowMemoryFallback() ? cloneMatches() : [];
   }
 
   const baseMatches = matchRows.map((match) =>
@@ -177,6 +183,10 @@ export async function addBlessing(matchId: string, ritual: RitualType) {
 
     // If Supabase is configured but the write fails (often due to RLS/policies),
     // do not silently fall back to in-memory state (serverless would "reset").
+    return null;
+  }
+
+  if (!allowMemoryFallback()) {
     return null;
   }
 

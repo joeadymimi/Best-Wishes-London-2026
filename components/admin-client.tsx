@@ -26,6 +26,15 @@ export function AdminClient() {
     today: number;
     last7Days: Array<{ day: string; count: number }>;
   } | null>(null);
+  const [diagnostics, setDiagnostics] = useState<{
+    nodeEnv: string;
+    hasSupabaseUrl: boolean;
+    hasAnonKey: boolean;
+    hasServiceRoleKey: boolean;
+    serverClientReady: boolean;
+    canSelectMatches: boolean | null;
+    canSelectBlessings: boolean | null;
+  } | null>(null);
 
   useEffect(() => {
     async function loadMatches() {
@@ -59,6 +68,31 @@ export function AdminClient() {
       });
     }
     void loadAnalytics();
+  }, []);
+
+  useEffect(() => {
+    async function loadDiagnostics() {
+      const response = await fetch("/api/admin/diagnostics", { cache: "no-store" });
+      const data = (await response.json()) as {
+        nodeEnv?: string;
+        hasSupabaseUrl?: boolean;
+        hasAnonKey?: boolean;
+        hasServiceRoleKey?: boolean;
+        serverClientReady?: boolean;
+        canSelectMatches?: boolean | null;
+        canSelectBlessings?: boolean | null;
+      };
+      setDiagnostics({
+        nodeEnv: data.nodeEnv ?? "",
+        hasSupabaseUrl: Boolean(data.hasSupabaseUrl),
+        hasAnonKey: Boolean(data.hasAnonKey),
+        hasServiceRoleKey: Boolean(data.hasServiceRoleKey),
+        serverClientReady: Boolean(data.serverClientReady),
+        canSelectMatches: data.canSelectMatches ?? null,
+        canSelectBlessings: data.canSelectBlessings ?? null
+      });
+    }
+    void loadDiagnostics();
   }, []);
 
   const selectedMatch = useMemo(
@@ -134,6 +168,13 @@ export function AdminClient() {
           <span className="series-score">总访问量：{analytics?.total ?? 0}</span>
           <span className="series-score">今日访问量：{analytics?.today ?? 0}</span>
         </div>
+        {diagnostics ? (
+          <div className="admin-actions">
+            <span className="series-score">
+              数据源：Supabase {diagnostics.serverClientReady ? "已连接" : "未连接"}（URL {diagnostics.hasSupabaseUrl ? "OK" : "缺失"}，Anon {diagnostics.hasAnonKey ? "OK" : "缺失"}，Service Role {diagnostics.hasServiceRoleKey ? "OK" : "缺失"}）
+            </span>
+          </div>
+        ) : null}
         {analytics?.last7Days?.length ? (
           <div className="admin-actions">
             <span className="series-score">

@@ -364,6 +364,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     const fortuneBoost = comboPreview >= 5 ? 6 : comboPreview >= 3 ? 4 : 2;
     registerCombo(ritual);
 
+    const previous = matches;
     const optimistic = matches.map((match) =>
       match.id === selectedMatch.id
         ? {
@@ -391,12 +392,22 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
         body: JSON.stringify({ matchId: selectedMatch.id, ritual })
       });
 
-      const data = (await response.json()) as { match?: MatchItem };
+      const data = (await response.json().catch(() => ({}))) as { match?: MatchItem; error?: string };
+
+      if (!response.ok || !data.match) {
+        setMatches(previous);
+        setWishEcho("当前应援未能成功记录到服务器，请稍后重试。");
+        // Pull latest server state in case it did record but response failed mid-flight.
+        void refreshMatches();
+        return;
+      }
+
       if (data.match) {
         updateMatch(selectedMatch.id, () => data.match as MatchItem);
       }
     } catch {
-      setMatches(optimistic);
+      setMatches(previous);
+      setWishEcho("网络波动导致应援未能确认写入，请稍后重试。");
     }
   }
 
