@@ -233,47 +233,6 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     [matches]
   );
 
-  function getScheduleBucketLabel(match: MatchItem) {
-    const label = (match.time ?? "").trim();
-    if (!label) return "待定";
-    // Prefer "5月1日 17:00" / "5月1日 0:00(+1)" style labels as the bucket title.
-    const m = label.match(/(\d{1,2}月\d{1,2}日)\s*(\d{1,2}:\d{2}(?:\(\+\d+\))?)/);
-    if (m) return `${m[1]} ${m[2]}`;
-    // Fallback: keep original label ("进行中", "18:30", etc.)
-    return label;
-  }
-
-  function getScheduleSortKey(bucket: string) {
-    const m = bucket.match(/(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})(?:\(\+(\d+)\))?/);
-    if (!m) return Number.POSITIVE_INFINITY;
-    const month = Number(m[1]);
-    const day = Number(m[2]);
-    const hour = Number(m[3]);
-    const minute = Number(m[4]);
-    const dayOffset = m[5] ? Number(m[5]) : 0;
-    // Use 2026 as the season year for stable ordering.
-    return Date.UTC(2026, month - 1, day + dayOffset, hour, minute);
-  }
-
-  const scheduleBuckets = useMemo(() => {
-    const buckets = new Map<string, MatchItem[]>();
-    for (const match of matches) {
-      const key = getScheduleBucketLabel(match);
-      const list = buckets.get(key) ?? [];
-      list.push(match);
-      buckets.set(key, list);
-    }
-
-    const entries = Array.from(buckets.entries()).map(([label, items]) => {
-      const sorted = [...items].sort((a, b) => a.table.localeCompare(b.table));
-      return { label, sortKey: getScheduleSortKey(label), items: sorted };
-    });
-
-    // Put parseable date/time buckets first in chronological order; others at the end.
-    entries.sort((a, b) => a.sortKey - b.sortKey || a.label.localeCompare(b.label));
-    return entries;
-  }, [matches]);
-
   const lastMatch = useMemo(
     () => matches.find((match) => match.id === selectedMatchId) ?? null,
     [matches, selectedMatchId]
@@ -686,48 +645,6 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
               </article>
             ))}
           </div>
-        </section>
-
-        <section className="panel matches-panel">
-          <div className="panel-head">
-            <div>
-              <p className="kicker">Match Center</p>
-              <h2>赛程</h2>
-            </div>
-            <div className="filter-pills">
-              <button className="pill active" type="button">小组赛</button>
-              <button className="pill" type="button">晋级赛</button>
-              <button className="pill" type="button">中国队</button>
-            </div>
-          </div>
-          {loading ? <p className="hero-text">正在加载比赛数据...</p> : null}
-          {!loading ? (
-            <p className="hero-text">
-              当前仅展示已录入的比赛。赛程录入完成后，这里会自动扩展为完整比赛列表。
-            </p>
-          ) : null}
-
-          <div className="stage-board">
-            <div className="group-grid">
-              {scheduleBuckets.map((bucket) => (
-                <section key={bucket.label} className="group-card">
-                  <div className="group-card-header">
-                    <div>
-                      <h3>{bucket.label}</h3>
-                      <p className="group-subtitle">本时间段赛程</p>
-                    </div>
-                    <span className="series-score">{bucket.items.length} 场</span>
-                  </div>
-                  <div className="group-matches">
-                    {bucket.items.map((match) => (
-                      <MatchCard key={match.id} match={match} openMatch={openMatch} getTotalForMatch={getTotalForMatch} getOpenLabel={getOpenLabel} />
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </div>
-
         </section>
       </main>
     </div>
