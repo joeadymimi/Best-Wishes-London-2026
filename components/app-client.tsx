@@ -24,7 +24,6 @@ type AppClientProps = {
   initialMatchId?: string;
 };
 
-const STORAGE_KEY = "london-2026-matches";
 const LAST_MATCH_KEY = "london-2026-last-match";
 
 function isChinaSpotlightMatch(match: MatchItem) {
@@ -55,34 +54,62 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
   };
   const mokugyoRef = useRef<HTMLButtonElement>(null);
 
+  async function refreshMatches() {
+    try {
+      const response = await fetch("/api/matches", { cache: "no-store" });
+      const data = (await response.json()) as { matches?: MatchItem[] };
+      if (data.matches?.length) {
+        setMatches(data.matches);
+      }
+    } catch {
+      // Keep the last known state to avoid jarring UI resets.
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     async function bootstrap() {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        try {
-          setMatches(JSON.parse(raw) as MatchItem[]);
-        } catch {
-          window.localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-
-      try {
-        const response = await fetch("/api/matches", { cache: "no-store" });
-        const data = (await response.json()) as { matches?: MatchItem[] };
-        if (data.matches?.length) {
-          setMatches(data.matches);
-        }
-      } finally {
-        setLoading(false);
-      }
+      await refreshMatches();
     }
 
     void bootstrap();
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(matches));
-  }, [matches]);
+    let interval: number | null = null;
+
+    function start() {
+      if (interval) return;
+      // “Real-time enough” without being too aggressive.
+      interval = window.setInterval(() => {
+        void refreshMatches();
+      }, 8000);
+    }
+
+    function stop() {
+      if (interval) {
+        window.clearInterval(interval);
+        interval = null;
+      }
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refreshMatches();
+        start();
+      } else {
+        stop();
+      }
+    };
+
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      stop();
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedMatchId) {
@@ -466,7 +493,7 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
     <div className="app-shell">
       <header className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">赛事追踪原型</p>
+          <p className="eyebrow">赛事追踪</p>
           <h1>伦敦 2026 世锦赛</h1>
           <p className="hero-text">
             追踪每一场比赛、查看最新比分，并在你关注的对局里上香、敲木鱼、盘手串，为比赛加一点仪式感。
@@ -479,9 +506,9 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
         </div>
         <div className="hero-side">
           <div className="count-card">
-            <p>今日赛程</p>
-            <strong>12</strong>
-            <span>当前为原型数据，后续可接实时赛程接口</span>
+            <p>比赛场次</p>
+            <strong>{matches.length}</strong>
+            <span>以比赛官方赛程与数据源更新为准</span>
           </div>
           <div className="count-card warm">
             <p>总祈福次数</p>
@@ -960,17 +987,6 @@ export function AppClient({ mode, initialMatchId }: AppClientProps) {
           </div>
         </section>
 
-        <section className="panel admin-panel">
-          <p className="eyebrow">Test Launch Ready</p>
-          <h2>测试上线骨架</h2>
-          <p className="hero-text">
-            当前页面已迁到 Next.js 路由结构。下一步接 Supabase 后，就可以把这里的本地存储数据替换成正式数据库。
-          </p>
-          <div className="admin-actions">
-            <Link href="/admin" className="back-btn">打开后台占位页</Link>
-            <span className="series-score">当前模式：浏览器本地持久化</span>
-          </div>
-        </section>
       </main>
     </div>
   );
@@ -1014,7 +1030,7 @@ function MatchCard({
           <span className="blessing-chip open-chip">{getOpenLabel(match)}</span>
         </div>
         <button className="bless-btn" type="button" onClick={() => openMatch(match.id)}>
-          在线烧香
+          进入应援
         </button>
       </div>
     </article>
